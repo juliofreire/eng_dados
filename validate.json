@@ -1,0 +1,15 @@
+{
+    "name": "mongodb-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+      "tasks.max": "1",
+      "mongodb.hosts": "mongodb:27017",
+      "mongodb.name": "dbserver1",
+      "mongodb.user": "root",
+      "mongodb.password": "example",
+      "mongodb.authsource": "admin",
+      "database.whitelist": "testdb",
+      "database.history.kafka.bootstrap.servers": "kafka:9092",
+      "database.history.kafka.topic": "dbhistory.fullfillment"
+    }
+  }

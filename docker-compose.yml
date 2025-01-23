@@ -1,0 +1,86 @@
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - kafka-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    networks:
+      - kafka-network
+
+  kafka-connect:
+    image: debezium/connect:2.4
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+      - mongodb
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "1"
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      # CONNECT_PLUGIN_PATH: "/kafka/connect/debezium-connector-mongodb"
+      # CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      # CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      # CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      # CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      # CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      # CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      # CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+    ports:
+      - "8083:8083"
+    # volumes:
+      # - ./kafka-connect-plugins:/kafka/connect/debezium-connector-mongodb
+      # - ./kafka-connect-plugins:/kafka/connect
+    networks:
+      - kafka-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      # MONGO_INITDB_REPLICA_SET_NAME: rs0
+    command: ["bash", "-c", "mongod --replSet rs0 --bind_ip localhost,mongodb --noauth"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0', members:[_id:0,host:'mongodb:27017'}]}) }" | mongosh --port 27017
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 2
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - kafka-network
+
+volumes:
+  mongo_data:
+
+networks:
+  kafka-network:
+    driver: bridge

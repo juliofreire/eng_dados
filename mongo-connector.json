@@ -1,0 +1,17 @@
+{
+    "name": "mongo-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+      "mongodb.hosts": "rs0/localhost:27017",
+      "tasks.max": "1",
+      "mongodb.connection.string":"mongodb://mongodb:27017/?replicaSet=rs0",
+      "topic.prefix": "topic",
+      "mongodb.name": "dbserver1",
+      "mongodb.user": "root",
+      "mongodb.password": "example",
+      "database.whitelist": "db_eng_dados",
+      "mongodb.members.auto.discover": "true",
+      "database.history.kafka.bootstrap.servers": "kafka:9092",
+      "database.history.kafka.topic": "schema-changes.mongo"
+    }
+}
